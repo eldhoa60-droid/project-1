@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Compact long interview transcripts to fit an LLM context window."
+    />
+    <title>ContextKit — Transcript Compactor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="ContextKit home">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i>
+          </span>
+          <span>ContextKit</span>
+        </a>
+        <div class="top-meta">
+          <span class="status-dot"></span>
+          <span>Runs locally</span>
+          <span class="divider"></span>
+          <a href="README.md">Docs ↗</a>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro">
+          <div>
+            <p class="eyebrow">Transcript compactor / 01</p>
+            <h1>Keep the conversation.<br /><em>Lose the overflow.</em></h1>
+          </div>
+          <p class="intro-copy">
+            Turn hours of interview dialogue into clean, context-safe input.
+            Recent exchanges stay intact; earlier context is compressed.
+          </p>
+        </section>
+
+        <section class="workspace">
+          <aside class="settings-panel">
+            <div class="panel-heading">
+              <span>Context budget</span>
+              <span class="step-number">01</span>
+            </div>
+
+            <label class="field">
+              <span>Model preset</span>
+              <select id="modelPreset">
+                <option value="128000">GPT-4o · 128K</option>
+                <option value="200000">Claude 3.7 · 200K</option>
+                <option value="1000000">Gemini 2.5 · 1M</option>
+                <option value="custom">Custom limit</option>
+              </select>
+            </label>
+
+            <label class="field" id="customField" hidden>
+              <span>Custom context window</span>
+              <div class="input-suffix">
+                <input id="customContext" type="number" min="1000" value="32000" />
+                <small>tokens</small>
+              </div>
+            </label>
+
+            <div class="field-pair">
+              <label class="field">
+                <span>Response reserve</span>
+                <div class="input-suffix">
+                  <input id="responseReserve" type="number" min="0" value="4000" />
+                  <small>tok</small>
+                </div>
+              </label>
+              <label class="field">
+                <span>Prompt overhead</span>
+                <div class="input-suffix">
+                  <input id="promptOverhead" type="number" min="0" value="1000" />
+                  <small>tok</small>
+                </div>
+              </label>
+            </div>
+
+            <label class="field range-field">
+              <span>
+                Recent turns to preserve
+                <strong id="turnCount">8</strong>
+              </span>
+              <input id="recentTurns" type="range" min="1" max="24" value="8" />
+              <div class="range-labels"><span>1</span><span>24</span></div>
+            </label>
+
+            <div class="budget-card">
+              <div>
+                <span>Available for transcript</span>
+                <strong id="availableBudget">123,000</strong>
+              </div>
+              <span>tokens</span>
+            </div>
+
+            <p class="privacy-note">
+              <span aria-hidden="true">⌁</span>
+              Your transcript never leaves this browser.
+            </p>
+          </aside>
+
+          <div class="editor-panel">
+            <div class="panel-heading">
+              <span>Interview transcript</span>
+              <span class="step-number">02</span>
+            </div>
+
+            <div class="editor-toolbar">
+              <div class="format-tabs" role="group" aria-label="Transcript format">
+                <button class="tab active" data-format="text">Plain text</button>
+                <button class="tab" data-format="json">JSON</button>
+              </div>
+              <div class="toolbar-actions">
+                <label class="file-button">
+                  <input id="fileInput" type="file" accept=".txt,.json" />
+                  Import
+                </label>
+                <button id="sampleButton" class="text-button">Use sample</button>
+                <button id="clearButton" class="text-button muted">Clear</button>
+              </div>
+            </div>
+
+            <div class="editor-wrap">
+              <textarea
+                id="transcriptInput"
+                spellcheck="false"
+                placeholder="Paste your transcript here…&#10;&#10;Interviewer: Tell me about a difficult technical decision.&#10;&#10;Candidate: We had to choose between…"
+              ></textarea>
+              <div class="editor-footer">
+                <span id="inputStats">0 words · ~0 tokens</span>
+                <span id="formatHint">Detects “Speaker: dialogue” turns</span>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <div class="mini-flow">
+                <span>Preserve recent</span><i>→</i><span>Compress history</span><i>→</i><span>Verify limit</span>
+              </div>
+              <button id="compactButton" class="primary-button">
+                <span>Compact transcript</span>
+                <span aria-hidden="true">↘</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="resultSection" class="result-section" hidden>
+          <div class="result-header">
+            <div>
+              <p class="eyebrow">Ready for your model / 03</p>
+              <h2>Context-safe output</h2>
+            </div>
+            <div class="result-actions">
+              <button id="downloadButton" class="secondary-button">Download .txt</button>
+              <button id="copyButton" class="primary-button compact">Copy output</button>
+            </div>
+          </div>
+
+          <div class="result-grid">
+            <div class="output-card">
+              <pre id="outputText"></pre>
+            </div>
+            <aside class="result-stats">
+              <div class="fit-badge"><span>✓</span> Within model limit</div>
+              <div class="stat-block">
+                <span>Final token count</span>
+                <strong id="finalTokens">0</strong>
+                <small id="tokenLimitLabel">of 123,000 available</small>
+              </div>
+              <div class="meter"><i id="meterFill"></i></div>
+              <dl>
+                <div><dt>Original</dt><dd id="originalTokens">0</dd></div>
+                <div><dt>Reduction</dt><dd id="reductionValue">0%</dd></div>
+                <div><dt>Turns retained</dt><dd id="turnsRetained">0</dd></div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span>Built for long-form interviews</span>
+        <span>ContextKit / Local utility</span>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status">Copied to clipboard</div>
+    <script src="app.js"></script>
+  </body>
+</html>
